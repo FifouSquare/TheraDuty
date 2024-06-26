@@ -90,7 +90,6 @@ def launch_game(vid, card_val_grid, rows=4, cols=5):
                             elif length > 100 and is_pinched:
                                 is_pinched = False
 
-                            prev_cx, prev_cy = cx, cy
         else:
             is_pinched = False
 
@@ -106,11 +105,11 @@ def launch_game(vid, card_val_grid, rows=4, cols=5):
                 continue
             else:
                 if second_card == (-1, -1):
-                    print("First card == -1")
+                    print("first_card != (posY, posX): ", first_card, (posY, posX))
                     second_card = (posY, posX)
                     has_to_draw = False
                     continue
-                elif first_card == (-1, -1):
+                elif first_card == (-1, -1) and second_card != (posY, posX):
                     first_card = (posY, posX)
                     has_to_draw = False
 
