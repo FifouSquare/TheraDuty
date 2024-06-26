@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import random
+import sys
 
 import cv2
 import mediapipe as mp
@@ -11,7 +12,7 @@ def setup_game(rows, cols):
     return [card_values[i * cols:(i + 1) * cols] for i in range(rows)]
 
 
-def launch_game(card_val_grid, rows=4, cols=5):
+def launch_game(vid, card_val_grid, rows=4, cols=5):
     has_won = False
     has_to_draw = False
     is_pinched = False
@@ -25,6 +26,11 @@ def launch_game(card_val_grid, rows=4, cols=5):
 
     GRID_BASE = 200
     GRID_INTERVAL = 50
+
+    mp_hands = mp.solutions.hands
+    hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.7, min_tracking_confidence=0.7)
+    mp_draw = mp.solutions.drawing_utils
+
     while True:
         success, r_img = vid.read()
         img = cv2.flip(r_img, 1)
@@ -158,11 +164,22 @@ def launch_game(card_val_grid, rows=4, cols=5):
         cv2.waitKey(1)
         cv2.imshow("Memo", img)
 
+    destroy_all_windows(vid)
 
-def menu():
+
+def destroy_all_windows(video):
+    cv2.destroyAllWindows()
+    video.release()
+
+
+def menu(vid):
     is_in_menu = True
     is_pinched = False
     has_to_quit = False
+
+    mp_hands = mp.solutions.hands
+    hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.7, min_tracking_confidence=0.7)
+    draw = mp.solutions.drawing_utils
 
     while is_in_menu:
         success, r_img = vid.read()
@@ -186,7 +203,7 @@ def menu():
 
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
-                mp_draw.draw_landmarks(img, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+                draw.draw_landmarks(img, hand_landmarks, mp_hands.HAND_CONNECTIONS)
                 for i, lm in enumerate(hand_landmarks.landmark):
                     h, w, c = img.shape
                     cx, cy = int(lm.x * w), int(lm.y * h)
@@ -210,21 +227,24 @@ def menu():
         if cv2.waitKey(1) & 0xFF == ord('s'):
             is_in_menu = False
         elif cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+            is_in_menu = False
+            has_to_quit = True
 
     if has_to_quit:
+        destroy_all_windows(vid)
         return
     rows = 4
     cols = 5
 
-    launch_game(setup_game(rows, cols), rows, cols)
+    print("Test")
+    launch_game(vid, setup_game(rows, cols), rows, cols)
+
+
+def main():
+    cap = cv2.VideoCapture(0)
+    cap.set(3, 940)
+    menu(cap)
 
 
 if __name__ == '__main__':
-    vid = cv2.VideoCapture(0)
-    vid.set(3, 940)
-    mp_hands = mp.solutions.hands
-    hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.7, min_tracking_confidence=0.7)
-    mp_draw = mp.solutions.drawing_utils
-
-    menu()
+    main()
