@@ -1,0 +1,45 @@
+name: Acceptance Cycle
+run-name: Acceptance Cycle
+
+on:
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+        type: choice
+        options:
+        - info
+        - warning
+        - debug
+      runner:
+        description: "Runner Agent"
+        required: true
+        default: 'ubuntu-latest'
+        type: choice
+        options:
+        - ubuntu-latest
+        - self-hosted
+  workflow_run:
+    workflows: ["Commit Cycle"]
+    types:
+      - completed
+
+jobs:
+  run_test:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'}}
+    runs-on: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.runner || 'ubuntu-latest' }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: develop
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r games_file/python/requirements.txt
+#      - run: |
+#          python -m unittest games_file/python/tests/unit_tests

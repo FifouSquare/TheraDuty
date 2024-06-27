@@ -1,0 +1,55 @@
+name: Commit Cycle
+run-name: Commit Cycle
+
+on:
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+        type: choice
+        options:
+          - info
+          - warning
+          - debug
+      runner:
+        description: "Runner Agent"
+        required: true
+        default: 'ubuntu-latest'
+        type: choice
+        options:
+          - ubuntu-latest
+          - self-hosted
+
+  push:
+    branches: [ "develop" ]
+
+jobs:
+  games:
+    name: ${{github.commit_message}}
+    runs-on: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.runner || 'ubuntu-latest' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || 'develop' }}
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r games_file/python/requirements.txt
+      - name: Analyze code
+        run: |
+          python -m flake8 games_file/python
+
+#  launcher:
+#    name: ${{github.commit_message}}
+#    runs-on: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.runner || 'ubuntu-latest' }}
+
+
+
+

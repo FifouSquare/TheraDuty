@@ -1,7 +1,8 @@
 import unittest
-from unittest.mock import patch, MagicMock
-import cv2
+from unittest.mock import patch
+
 import numpy as np
+
 from memo import menu, setup_game, launch_game
 
 
