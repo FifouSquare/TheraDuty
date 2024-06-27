@@ -96,7 +96,6 @@ int main(int argc, char *argv[]) {
 
     LauncherWidget window;
     window.setWindowTitle("Thera Duty");
-    window.setBaseSize(800, 600);
     window.setStyleSheet("background-color: #3C3C3C;");
 
     storeButton->setFixedHeight(100);
@@ -147,7 +146,7 @@ int main(int argc, char *argv[]) {
 
     window.setLayout(mainRow);
 
-    window.resize(300, 100);
+    window.resize(800, 600);
     window.show();
 
     return QApplication::exec();
