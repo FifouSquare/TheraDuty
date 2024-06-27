@@ -1,0 +1,71 @@
+name: Push to Main
+run-name: Push to Main
+
+on:
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+        type: choice
+        options:
+        - info
+        - warning
+        - debug
+      runner:
+        description: "Runner Agent"
+        required: true
+        default: 'ubuntu-latest'
+        type: choice
+        options:
+        - ubuntu-latest
+        - self-hosted
+  workflow_run:
+    workflows: ["Acceptance Cycle"]
+    types:
+      - completed
+
+jobs:
+  merge-develop-into-main:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'}}
+    runs-on: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.runner || 'ubuntu-latest' }}
+
+    steps:
+    - name: Checkout main branch
+      uses: actions/checkout@v4
+      with:
+        ref: main
+
+    - name: Increment Counter
+      id: increment_counter
+      run: |
+        cd $GITHUB_WORKSPACE
+        if [ -f counter.txt ]; then
+          count=$(cat counter.txt)
+          count=$((count + 1))
+          echo "$count" > counter.txt
+        else
+          echo "1" > counter.txt
+        fi
+
+    - name: Configure Git
+      run: |
+        git config user.name "Main GitHub Actions Bot"
+        git config user.email "victor.delamonica@epitech.eu"
+    - name: Merge develop branch into main
+      run: |
+        git fetch origin develop:develop
+        count=$(cat counter.txt)
+        git merge -s recursive -X theirs --no-ff develop -m "Merge from develop (#$count)" --allow-unrelated-histories
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: main
+
+    - name: Upload Counter Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: push-counter
+        path: $GITHUB_WORKSPACE/counter.txt
