@@ -9,7 +9,8 @@ from memo import menu, setup_game, launch_game
 class TestMenu(unittest.TestCase):
     @patch('cv2.VideoCapture')
     def test_menu_starts_game_when_s_pressed(self, mock_vid):
-        mock_vid.read.return_value = (True, np.zeros((500, 500, 3), dtype=np.uint8))
+        mock_vid.read.return_value = (True, np.zeros((500, 500, 3),
+                                                     dtype=np.uint8))
         with patch('cv2.waitKey', return_value=ord('s')):
             with patch('memo.launch_game') as mock_launch:
                 menu(mock_vid)
@@ -17,7 +18,8 @@ class TestMenu(unittest.TestCase):
 
     @patch('cv2.VideoCapture')
     def test_menu_quits_when_q_pressed(self, mock_vid):
-        mock_vid.read.return_value = (True, np.zeros((500, 500, 3), dtype=np.uint8))
+        mock_vid.read.return_value = (True, np.zeros((500, 500, 3),
+                                                     dtype=np.uint8))
         with patch('cv2.waitKey', return_value=ord('q')):
             with patch('cv2.destroyAllWindows') as mock_destroy:
                 menu(mock_vid)
@@ -43,8 +45,10 @@ class LaunchGameTests(unittest.TestCase):
     @patch('cv2.flip')
     @patch('cv2.VideoCapture')
     def test_game_quits_when_q_pressed(self, mock_vid, mock_flip):
-        mock_vid.read.return_value = (True, np.zeros((500, 500, 3), dtype=np.uint8))
-        mock_flip.return_value = np.zeros((500, 500, 3), dtype=np.uint8)
+        mock_vid.read.return_value = (
+            True, np.zeros((500, 500, 3), dtype=np.uint8))
+        mock_flip.return_value = np.zeros((500, 500, 3),
+                                          dtype=np.uint8)
         with patch('cv2.waitKey', return_value=ord('q')):
             with patch('cv2.destroyAllWindows') as mock_destroy:
                 launch_game(mock_vid, [[-1] * 5] * 4)
