@@ -189,6 +189,39 @@ def destroy_all_windows(video):
     cv2.destroyAllWindows()
     video.release()
 
+def how_to_play(vid):
+    is_in_how_to_play = True
+    mp_hands = mp.solutions.hands
+    hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.7,
+                           min_tracking_confidence=0.7)
+    draw = mp.solutions.drawing_utils
+
+    while is_in_how_to_play:
+        success, r_img = vid.read()
+        img = cv2.flip(r_img, 1)
+        rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        results = hands.process(rgb_img)
+        cv2.putText(img, "Le but du jeu est de trouver les paires de cartes",
+                    (10, 90),
+                    cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 3)
+        cv2.putText(img, "en les retournant deux par deux",
+                    (10, 120),
+                    cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 3)
+        cv2.putText(img, "Appuyez sur 's' pour commencer le jeu",
+                    (10, 180),
+                    cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 3)
+
+        if results.multi_hand_landmarks:
+            for hand_landmarks in results.multi_hand_landmarks:
+                draw.draw_landmarks(img, hand_landmarks,
+                                    mp_hands.HAND_CONNECTIONS)
+
+        cv2.imshow("How to play", img)
+        if cv2.waitKey(1) & 0xFF == ord('s'):
+            is_in_how_to_play = False
+        elif cv2.waitKey(1) & 0xFF == ord('q'):
+            is_in_how_to_play = False
+            destroy_all_windows(vid)
 
 def menu(vid):
     is_in_menu = True
@@ -261,6 +294,12 @@ def menu(vid):
                                             1] + 100:
                                     has_to_quit = True
                                     is_in_menu = False
+                                elif third_rect[0] < cx < third_rect[
+                                    0] + 200 and third_rect[1] < cy < \
+                                        third_rect[
+                                            1] + 100:
+                                    go_to_how_to_play = True
+                                    is_in_menu = False
 
         cv2.imshow("Menu", img)
         if cv2.waitKey(1) & 0xFF == ord('s'):
@@ -272,6 +311,9 @@ def menu(vid):
     if has_to_quit:
         destroy_all_windows(vid)
         return
+    if go_to_how_to_play:
+        how_to_play(vid)
+        is_in_menu = True
     rows = 4
     cols = 5
 
