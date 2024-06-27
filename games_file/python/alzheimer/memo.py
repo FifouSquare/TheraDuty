@@ -205,6 +205,7 @@ def menu(vid):
         img = cv2.flip(r_img, 1)
         first_rect = (img.shape[1] // 2 - 100, img.shape[0] // 2 - 200)
         second_rect = (img.shape[1] // 2 - 100, img.shape[0] // 2 + 200)
+        third_rect = (img.shape[1] // 2 - 100, img.shape[0] // 2)
         rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         results = hands.process(rgb_img)
         cv2.putText(img, "Appuyez sur 's' pour commencer le jeu",
@@ -225,6 +226,12 @@ def menu(vid):
         cv2.putText(img, "Quitter", (second_rect[0] + 50, second_rect[1] + 50),
                     cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0),
                     3)
+        cv2.rectangle(img, third_rect, (third_rect[0] + 200, third_rect[1] + 100),
+                      (255, 255, 255), -1)
+        cv2.putText(img, "Comment", (third_rect[0] + 25, third_rect[1] + 50),
+                    cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 3)
+        cv2.putText(img, "jouer", (third_rect[0] + 50, third_rect[1] + 75),
+                    cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 3)
 
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
