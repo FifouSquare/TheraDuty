@@ -6,6 +6,7 @@
 #include <QProcess>
 #include <QMessageBox>
 #include <QFile>
+#include <QPixmap>
 
 QPushButton *storeButton;
 QPushButton *gamesButton;
@@ -97,8 +98,10 @@ int main(int argc, char *argv[]) {
     LauncherWidget window;
     window.setWindowTitle("Thera Duty");
     window.setStyleSheet("background-color: #3C3C3C;");
+    window.setFixedSize(1000, 800);
 
     storeButton->setFixedHeight(100);
+    storeButton->setFixedWidth(300);
     storeButton->setStyleSheet(selectedButtonMenuStyle);
     storeButton->setCursor(Qt::PointingHandCursor);
     QObject::connect(storeButton, &QPushButton::clicked, []() {
@@ -106,6 +109,7 @@ int main(int argc, char *argv[]) {
     });
 
     gamesButton->setFixedHeight(100);
+    gamesButton->setFixedWidth(300);
     gamesButton->setStyleSheet(buttonMenuStyle);
     gamesButton->setCursor(Qt::PointingHandCursor);
     QObject::connect(gamesButton, &QPushButton::clicked, []() {
@@ -113,6 +117,7 @@ int main(int argc, char *argv[]) {
     });
 
     formsButton->setFixedHeight(100);
+    formsButton->setFixedWidth(300);
     formsButton->setStyleSheet(buttonMenuStyle);
     formsButton->setCursor(Qt::PointingHandCursor);
     QObject::connect(formsButton, &QPushButton::clicked, []() {
@@ -128,9 +133,24 @@ int main(int argc, char *argv[]) {
     auto *storeColumn = new QVBoxLayout;
     storeColumn->setAlignment(Qt::AlignTop);
     auto demoGame = new QHBoxLayout;
-    game1 = new QPushButton("Memo");
-    QObject::connect(game1, &QPushButton::clicked, &window, &LauncherWidget::launchApplication);
+
+    //GAME 1 : MEMO
+    game1 = new QPushButton();
+    QPixmap pic("../Pics/memory.png");
+    game1->setIcon(pic);
+    game1->setIconSize(QSize(200, 200));
+    std::string game1Name = "Memory Game";
+    game1->setText(QString::fromStdString(game1Name));
+
+    //GAME 2 : BODY
     game2 = new QPushButton("Game 2");
+    QPixmap pic2("../Pics/Tempo.png");
+    game2->setIcon(pic2);
+    game2->setIconSize(QSize(200, 200));
+    std::string game2Name = "Body Game";
+    game2->setText(QString::fromStdString(game2Name));
+
+
     buy1 = new QPushButton("Buy Game 3");
     buy2 = new QPushButton("Buy Game 4");
     demoGame->addWidget(game1);
@@ -146,7 +166,7 @@ int main(int argc, char *argv[]) {
 
     window.setLayout(mainRow);
 
-    window.resize(800, 600);
+    window.resize(1000, 800);
     window.show();
 
     return QApplication::exec();
