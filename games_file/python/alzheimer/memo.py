@@ -4,6 +4,8 @@ import random
 import cv2
 import mediapipe as mp
 
+from games_file.python.cv2_utils import Camera, Rectangle, Hands
+
 
 def setup_game(rows, cols):
     card_values = [i for i in range(1, (rows * cols) // 2 + 1)] * 2
@@ -39,9 +41,9 @@ def launch_game(vid, card_val_grid, rows=4, cols=5):
         RGB_img = cv2.cvtColor(game_img, cv2.COLOR_BGR2RGB)
         results = hands.process(RGB_img)
 
-        cv2.rectangle(game_img, (0, 0),
-                      (game_img.shape[1], game_img.shape[0]),
-                      (255, 255, 255), -1),
+        background = Rectangle(0, 0, game_img.shape[1], game_img.shape[0],
+                               (255, 255, 255), -1)
+        background.draw(game_img)
         if all([card_val_grid[i][j] == -1 for i in range(rows) for j in
                 range(cols)]):
             cv2.rectangle(game_img, (0, 0),
@@ -197,9 +199,9 @@ def launch_game(vid, card_val_grid, rows=4, cols=5):
     destroy_all_windows(vid)
 
 
-def destroy_all_windows(video):
+def destroy_all_windows(cam):
+    cam.release()
     cv2.destroyAllWindows()
-    video.release()
 
 
 def how_to_play(vid):
@@ -237,110 +239,88 @@ def how_to_play(vid):
             destroy_all_windows(vid)
 
 
-def menu(vid):
+def draw_menu(img, first_rect: Rectangle, second_rect: Rectangle,
+              third_rect: Rectangle):
+    cv2.putText(img, "Appuyez sur 's' pour commencer le jeu",
+                (10, 30),
+                cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 3)
+    cv2.putText(img, "Appuyez sur 'q' pour quitter",
+                (10, 60),
+                cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 3)
+
+    first_rect.draw(img)
+    second_rect.draw(img)
+    third_rect.draw(img)
+
+
+def menu(cam: Camera):
     is_in_menu = True
-    is_pinched = False
     has_to_quit = False
     go_to_how_to_play = False
 
     mp_hands = mp.solutions.hands
-    hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.7,
-                           min_tracking_confidence=0.7)
-    draw = mp.solutions.drawing_utils
+    hands_detector = mp_hands.Hands(max_num_hands=1,
+                                    min_detection_confidence=0.7,
+                                    min_tracking_confidence=0.7)
 
     while is_in_menu:
-        success, r_img = vid.read()
-        img = cv2.flip(r_img, 1)
-        first_rect = (img.shape[1] // 2 - 100, img.shape[0] // 2 - 200)
-        second_rect = (img.shape[1] // 2 - 100, img.shape[0] // 2 + 200)
-        third_rect = (img.shape[1] // 2 - 100, img.shape[0] // 2)
-        rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        results = hands.process(rgb_img)
-        cv2.putText(img, "Appuyez sur 's' pour commencer le jeu",
-                    (10, 30),
-                    cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 3)
-        cv2.putText(img, "Appuyez sur 'q' pour quitter",
-                    (10, 60),
-                    cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 3)
+        img = cam.get_rgb_img()
+        results = hands_detector.process(img)
+        hands = Hands(results, img)
 
-        cv2.rectangle(img, first_rect,
-                      (first_rect[0] + 200, first_rect[1] + 100),
-                      (255, 255, 255), -1)
-        cv2.putText(img, "Jouer", (first_rect[0] + 50, first_rect[1] + 50),
-                    cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 3)
-        cv2.rectangle(img, second_rect,
-                      (second_rect[0] + 200, second_rect[1] + 100),
-                      (255, 255, 255), -1)
-        cv2.putText(img, "Quitter", (second_rect[0] + 50, second_rect[1] + 50),
-                    cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0),
-                    3)
-        cv2.rectangle(img, third_rect,
-                      (third_rect[0] + 200, third_rect[1] + 100),
-                      (255, 255, 255), -1)
-        cv2.putText(img, "Comment", (third_rect[0] + 25, third_rect[1] + 50),
-                    cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 3)
-        cv2.putText(img, "jouer", (third_rect[0] + 50, third_rect[1] + 75),
-                    cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 3)
+        rectangle_width = 300
+        first_rect = Rectangle(img.shape[1] // 2 - 100,
+                               img.shape[0] // 2 - 200,
+                               rectangle_width, 100, text="Jouer",
+                               corner_radius=24)
+        second_rect = Rectangle(img.shape[1] // 2 - 100,
+                                img.shape[0] // 2 + 200,
+                                rectangle_width, 100, text="Quitter",
+                                corner_radius=24)
+        third_rect = Rectangle(img.shape[1] // 2 - 100, img.shape[0] // 2,
+                               rectangle_width, 100, text="Comment jouer",
+                               corner_radius=24)
+        background = Rectangle(0, 0, img.shape[1], img.shape[0], (0, 0, 0),
+                               -1)
+        background.draw(img)
 
-        if results.multi_hand_landmarks:
-            for hand_landmarks in results.multi_hand_landmarks:
-                draw.draw_landmarks(img, hand_landmarks,
-                                    mp_hands.HAND_CONNECTIONS)
-                for i, lm in enumerate(hand_landmarks.landmark):
-                    h, w, c = img.shape
-                    cx, cy = int(lm.x * w), int(lm.y * h)
-                    if i == 4:
-                        Tx, Ty = cx, cy
-                        cv2.circle(img, (Tx, Ty), 5, (0, 0, 255), cv2.FILLED)
+        draw_menu(img, first_rect, second_rect, third_rect)
 
-                    if i == 8:
-                        cv2.circle(img, (cx, cy), 5, (0, 0, 255), cv2.FILLED)
-                        line = cv2.line(img, (cx, cy), (Tx, Ty), (0, 255, 0),
-                                        1)
-                        if line.shape[1] > 0:
-                            length = ((cx - Tx) ** 2 + (cy - Ty) ** 2) ** 0.5
-                            if length < 50 and not is_pinched:
-                                if (first_rect[0] < cx < first_rect[0] + 200
-                                        and first_rect[1] < cy < first_rect[
-                                            1] + 100):
-                                    is_in_menu = False
-                                elif second_rect[0] < cx < second_rect[
-                                    0] + 200 and second_rect[1] < cy < \
-                                        second_rect[
-                                            1] + 100:
-                                    has_to_quit = True
-                                    is_in_menu = False
-                                elif third_rect[0] < cx < third_rect[
-                                    0] + 200 and third_rect[1] < cy < \
-                                        third_rect[
-                                            1] + 100:
-                                    go_to_how_to_play = True
-                                    is_in_menu = False
+        if hands.landmarks:
+            hands.get_pinch_pos()
+
+        if hands.is_pinched_inside(first_rect):
+            is_in_menu = False
+        if hands.is_pinched_inside(second_rect):
+            is_in_menu = False
+            has_to_quit = True
+        if hands.is_pinched_inside(third_rect):
+            is_in_menu = False
+            go_to_how_to_play = True
 
         cv2.imshow("Menu", img)
         if cv2.waitKey(1) & 0xFF == ord('s'):
             is_in_menu = False
-        elif cv2.waitKey(1) & 0xFF == ord('q'):
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             is_in_menu = False
             has_to_quit = True
 
     if has_to_quit:
-        destroy_all_windows(vid)
+        destroy_all_windows(cam.camera)
         return
     if go_to_how_to_play:
-        how_to_play(vid)
+        how_to_play(cam.camera)
         is_in_menu = True
     rows = 4
     cols = 5
 
     print("Test")
-    launch_game(vid, setup_game(rows, cols), rows, cols)
+    launch_game(cam.camera, setup_game(rows, cols), rows, cols)
 
 
 def main():
-    cap = cv2.VideoCapture(0)
-    cap.set(3, 940)
-    menu(cap)
+    camera = Camera()
+    menu(camera)
 
 
 if __name__ == '__main__':
