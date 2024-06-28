@@ -6,6 +6,7 @@
 #include <QProcess>
 #include <QMessageBox>
 #include <QFile>
+#include <QLabel>
 #include <QPixmap>
 
 QPushButton *storeButton;
@@ -15,6 +16,7 @@ QPushButton *game1;
 QPushButton *game2;
 QPushButton *buy1;
 QPushButton *buy2;
+QPushButton *tempoButton;
 QString buttonMenuStyle;
 QString selectedButtonMenuStyle;
 
@@ -29,7 +31,7 @@ public slots:
 };
 
 void LauncherWidget::launchApplication() {
-    QString program = "/Users/delamonicavictor/CLionProjects/untitled/games/memo";
+    QString program = "/Users/hugo/Desktop/Epitech/EIP/TheraDuty/launcher/games/memo";
     QStringList arguments;
 
     if (!QFile::exists(program)) {
@@ -52,6 +54,7 @@ void onStoreButtonClicked(QPushButton *buttonClicked) {
         game2->hide();
         buy1->show();
         buy2->show();
+        tempoButton->hide();
     } else if (buttonClicked == gamesButton) {
         storeButton->setStyleSheet(buttonMenuStyle);
         gamesButton->setStyleSheet(selectedButtonMenuStyle);
@@ -60,6 +63,7 @@ void onStoreButtonClicked(QPushButton *buttonClicked) {
         game2->show();
         buy1->hide();
         buy2->hide();
+        tempoButton->hide();
     } else if (buttonClicked == formsButton) {
         storeButton->setStyleSheet(buttonMenuStyle);
         gamesButton->setStyleSheet(buttonMenuStyle);
@@ -68,6 +72,7 @@ void onStoreButtonClicked(QPushButton *buttonClicked) {
         game2->hide();
         buy1->hide();
         buy2->hide();
+        tempoButton->show();
     }
 }
 
@@ -78,6 +83,12 @@ int main(int argc, char *argv[]) {
     storeButton = new QPushButton("Store");
     gamesButton = new QPushButton("Games");
     formsButton = new QPushButton("Forms");
+    QLabel *Logo = new QLabel("Thera Duty");
+    QPixmap logo = QPixmap("../Pics/logo.png");
+    Logo->setPixmap(logo);
+    Logo->setStyleSheet("background-color: transparent;");
+    Logo->setFixedSize(120, 120);
+    Logo->setPixmap(logo);
 
     buttonMenuStyle = "QPushButton { "
                            "border-top-left-radius: 20px; "
@@ -126,6 +137,7 @@ int main(int argc, char *argv[]) {
 
     auto mainRow = new QHBoxLayout;
     auto layout = new QVBoxLayout;
+    layout->addWidget(Logo);
     layout->addWidget(storeButton);
     layout->addWidget(gamesButton);
     layout->addWidget(formsButton);
@@ -153,15 +165,18 @@ int main(int argc, char *argv[]) {
 
     buy1 = new QPushButton("Buy Game 3");
     buy2 = new QPushButton("Buy Game 4");
+    tempoButton = new QPushButton();
     demoGame->addWidget(game1);
     demoGame->addWidget(game2);
     demoGame->addWidget(buy1);
     demoGame->addWidget(buy2);
+    demoGame->addWidget(tempoButton);
     game1->hide();
     game2->hide();
     storeColumn->addLayout(demoGame);
     mainRow->addLayout(layout);
     mainRow->addLayout(storeColumn);
+
 
 
     window.setLayout(mainRow);
