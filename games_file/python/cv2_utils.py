@@ -1,5 +1,4 @@
 import cv2
-import mediapipe as mp
 
 
 def draw_rounded_rectangle(img, top_left, bottom_right, color, thickness,
@@ -71,11 +70,18 @@ def draw_rounded_shadow_rectangle(img, top_left, bottom_right, color, radius,
     # Draw the main filled rounded rectangle on top of the shadow
     draw_filled_rounded_rectangle(img, top_left, bottom_right, color, radius)
 
+def draw_line(lm, i, w, h):
+    start = (int(lm.landmark[i].x * w),
+             int(lm.landmark[i].y * h))
+    end = (int(lm.landmark[i + 1].x * w),
+           int(lm.landmark[i + 1].y * h))
+    return start, end
+
 
 class Camera:
     def __init__(self):
         self.camera = cv2.VideoCapture(0)
-        self.resolution = (640, 480)
+        self.resolution = (800, 600)
         self.framerate = 24
         self.camera.set(3, 940)
 
@@ -95,7 +101,7 @@ class Rectangle:
     def __init__(self, x, y, width, height, color=(255, 255, 255),
                  thickness=-1,
                  text="",
-                 corner_radius=0):
+                 corner_radius=24):
         self.x = x
         self.y = y
         self.width = width
@@ -104,6 +110,7 @@ class Rectangle:
         self.thickness = thickness
         self.text = text
         self.corner_radius = corner_radius
+        self.is_clicked = False
 
     def draw(self, img):
         if self.thickness == -1:
@@ -117,7 +124,7 @@ class Rectangle:
                                    (self.x + self.width, self.y + self.height),
                                    radius=self.corner_radius, color=self.color,
                                    thickness=self.thickness)
-        if self.text != "":
+        if self.text != "" and self.is_clicked:
             cv2.putText(img, self.text,
                         (
                             self.x + self.width // 2 - len(self.text) * 10,
@@ -134,12 +141,66 @@ class Hands:
         self.pinch_length = 50
         self.pinch_length_open = 100
 
+    def draw(self, thickness=50, color=(0, 255, 0)):
+        lm = self.landmarks[0]
+        h, w, c = self.img.shape
+        for i in range(21):
+            if i < 4:
+                start, end = draw_line(lm, i, w, h)
+                cv2.line(self.img, start, end, color, thickness)
+            if i == 4:
+                start = (int(lm.landmark[1].x * w),
+                         int(lm.landmark[1].y * h))
+                end = (int(lm.landmark[5].x * w),
+                       int(lm.landmark[5].y * h))
+                cv2.line(self.img, start, end, color, thickness)
+            if 4 < i < 8:
+                start, end = draw_line(lm, i, w, h)
+                cv2.line(self.img, start, end, color, thickness)
+
+            if i == 8:
+                start = (int(lm.landmark[5].x * w),
+                         int(lm.landmark[5].y * h))
+                end = (int(lm.landmark[9].x * w),
+                       int(lm.landmark[9].y * h))
+                cv2.line(self.img, start, end, color, thickness)
+
+            if 8 < i < 12:
+                start, end = draw_line(lm, i, w, h)
+                cv2.line(self.img, start, end, color, thickness)
+
+            if i == 12:
+                start = (int(lm.landmark[9].x * w),
+                         int(lm.landmark[9].y * h))
+                end = (int(lm.landmark[13].x * w),
+                       int(lm.landmark[13].y * h))
+                cv2.line(self.img, start, end, color, thickness)
+
+            if 12 < i < 16:
+                start, end = draw_line(lm, i, w, h)
+                cv2.line(self.img, start, end, color, thickness)
+
+            if i == 16:
+                start = (int(lm.landmark[13].x * w),
+                         int(lm.landmark[13].y * h))
+                end = (int(lm.landmark[17].x * w),
+                       int(lm.landmark[17].y * h))
+                cv2.line(self.img, start, end, color, thickness)
+
+            if 16 < i < 20:
+                start, end = draw_line(lm, i, w, h)
+                cv2.line(self.img, start, end, color, thickness)
+            if i == 17:
+                start = (int(lm.landmark[17].x * w),
+                         int(lm.landmark[17].y * h))
+                end = (int(lm.landmark[0].x * w),
+                       int(lm.landmark[0].y * h))
+                cv2.line(self.img, start, end, color, thickness)
+
     def get_pinch_pos(self):
         tx, ty = 0, 0
-        utils = mp.solutions.drawing_utils
         for hand_landmarks in self.landmarks:
-            utils.draw_landmarks(self.img, hand_landmarks,
-                                 mp.solutions.hands.HAND_CONNECTIONS)
+            self.draw()
             for i, lm in enumerate(hand_landmarks.landmark):
                 h, w, c = self.img.shape
                 cx, cy = int(lm.x * w), int(lm.y * h)

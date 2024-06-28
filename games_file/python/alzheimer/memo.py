@@ -82,6 +82,7 @@ def launch_game(vid, card_val_grid, rows=4, cols=5):
                                     3)
 
         if results.multi_hand_landmarks:
+            tx, ty = 0, 0
             for hand_landmarks in results.multi_hand_landmarks:
                 # mp_draw.draw_landmarks(game_img, hand_landmarks,
                 #                        mp_hands.HAND_CONNECTIONS)
@@ -89,18 +90,18 @@ def launch_game(vid, card_val_grid, rows=4, cols=5):
                     h, w, c = img.shape
                     cx, cy = int(lm.x * w), int(lm.y * h)
                     if i == 4:
-                        Tx, Ty = cx, cy
-                        cv2.circle(game_img, (Tx, Ty), 5, (0, 0, 255),
+                        tx, ty = cx, cy
+                        cv2.circle(game_img, (tx, ty), 5, (0, 0, 255),
                                    cv2.FILLED)
 
                     if i == 8:
                         cv2.circle(game_img, (cx, cy), 5, (0, 0, 255),
                                    cv2.FILLED)
-                        line = cv2.line(game_img, (cx, cy), (Tx, Ty),
+                        line = cv2.line(game_img, (cx, cy), (tx, ty),
                                         (0, 255, 0),
                                         1)
                         if line.shape[1] > 0:
-                            length = ((cx - Tx) ** 2 + (cy - Ty) ** 2) ** 0.5
+                            length = ((cx - tx) ** 2 + (cy - ty) ** 2) ** 0.5
                             if length < 50 and not is_pinched:
                                 print("Pinched")
                                 print(cx, cy)
@@ -204,39 +205,76 @@ def destroy_all_windows(cam):
     cv2.destroyAllWindows()
 
 
-def how_to_play(vid):
+def how_to_play(cam: Camera):
     is_in_how_to_play = True
     mp_hands = mp.solutions.hands
-    hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.7,
-                           min_tracking_confidence=0.7)
-    draw = mp.solutions.drawing_utils
+    hands_detector = mp_hands.Hands(max_num_hands=1,
+                                    min_detection_confidence=0.7,
+                                    min_tracking_confidence=0.7)
+    img = cam.get_rgb_img()
+    card_example = Rectangle(int(img.shape[1] * 0.6), int(img.shape[0] * 0.1), 150, 200,
+                             (255, 255, 255), -1, "1")
+    card_example_2 = Rectangle(int(img.shape[1] * 0.8), int(img.shape[0] * 0.1), 150, 200,
+                               (255, 255, 255), -1,
+                               "1")
+
+    play_button = Rectangle(int(img.shape[1] * 0.7), int(img.shape[0] * 0.7),
+                            200, 100, (255, 255, 255), -1, "Jouer")
+    play_button.is_clicked = True
+
+    quit_button = Rectangle(int(img.shape[1] * 0.2), int(img.shape[0] * 0.7),
+                            200, 100, (255, 255, 255), -1, "Quitter")
+    quit_button.is_clicked = True
 
     while is_in_how_to_play:
-        success, r_img = vid.read()
-        img = cv2.flip(r_img, 1)
-        rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        results = hands.process(rgb_img)
+        img = cam.get_rgb_img()
+        results = hands_detector.process(img)
+        hands = Hands(results, img)
+        background = Rectangle(0, 0, img.shape[1], img.shape[0], (0, 0, 0),
+                               -1)
+        background.draw(img)
         cv2.putText(img, "Le but du jeu est de trouver les paires de cartes",
                     (10, 90),
-                    cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 3)
+                    cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 3)
         cv2.putText(img, "en les retournant deux par deux",
                     (10, 120),
-                    cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 3)
+                    cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 3)
         cv2.putText(img, "Appuyez sur 's' pour commencer le jeu",
                     (10, 180),
-                    cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 3)
+                    cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 3)
 
-        if results.multi_hand_landmarks:
-            for hand_landmarks in results.multi_hand_landmarks:
-                draw.draw_landmarks(img, hand_landmarks,
-                                    mp_hands.HAND_CONNECTIONS)
+        card_example.draw(img)
+        card_example_2.draw(img)
+        quit_button.draw(img)
+
+        if card_example.is_clicked and card_example_2.is_clicked:
+            card_example.color = (0, 200, 0)
+            card_example_2.color = (0, 200, 0)
+            play_button.draw(img)
+
+        if hands.landmarks:
+            hands.draw()
+            hands.get_pinch_pos()
+
+        if hands.is_pinched_inside(card_example):
+            card_example.is_clicked = True
+
+        if hands.is_pinched_inside(card_example_2):
+            card_example_2.is_clicked = True
+
+        if hands.is_pinched_inside(play_button):
+            is_in_how_to_play = False
+
+        if hands.is_pinched_inside(quit_button):
+            is_in_how_to_play = False
+            destroy_all_windows(cam.camera)
 
         cv2.imshow("How to play", img)
         if cv2.waitKey(1) & 0xFF == ord('s'):
             is_in_how_to_play = False
         elif cv2.waitKey(1) & 0xFF == ord('q'):
             is_in_how_to_play = False
-            destroy_all_windows(vid)
+            destroy_all_windows(cam.camera)
 
 
 def draw_menu(img, first_rect: Rectangle, second_rect: Rectangle,
@@ -263,25 +301,31 @@ def menu(cam: Camera):
                                     min_detection_confidence=0.7,
                                     min_tracking_confidence=0.7)
 
+    img = cam.get_rgb_img()
+    rectangle_width = 300
+    first_rect = Rectangle(img.shape[1] // 2 - 100,
+                           img.shape[0] // 2 - 200,
+                           rectangle_width, 100, text="Jouer",
+                           corner_radius=24)
+    second_rect = Rectangle(img.shape[1] // 2 - 100,
+                            img.shape[0] // 2 + 200,
+                            rectangle_width, 100, text="Quitter",
+                            corner_radius=24)
+    third_rect = Rectangle(img.shape[1] // 2 - 100, img.shape[0] // 2,
+                           rectangle_width, 100, text="Comment jouer",
+                           corner_radius=24)
+    background = Rectangle(0, 0, img.shape[1], img.shape[0], (0, 0, 0),
+                           -1)
+
+    first_rect.is_clicked = True
+    second_rect.is_clicked = True
+    third_rect.is_clicked = True
+
     while is_in_menu:
         img = cam.get_rgb_img()
         results = hands_detector.process(img)
         hands = Hands(results, img)
 
-        rectangle_width = 300
-        first_rect = Rectangle(img.shape[1] // 2 - 100,
-                               img.shape[0] // 2 - 200,
-                               rectangle_width, 100, text="Jouer",
-                               corner_radius=24)
-        second_rect = Rectangle(img.shape[1] // 2 - 100,
-                                img.shape[0] // 2 + 200,
-                                rectangle_width, 100, text="Quitter",
-                                corner_radius=24)
-        third_rect = Rectangle(img.shape[1] // 2 - 100, img.shape[0] // 2,
-                               rectangle_width, 100, text="Comment jouer",
-                               corner_radius=24)
-        background = Rectangle(0, 0, img.shape[1], img.shape[0], (0, 0, 0),
-                               -1)
         background.draw(img)
 
         draw_menu(img, first_rect, second_rect, third_rect)
@@ -309,7 +353,7 @@ def menu(cam: Camera):
         destroy_all_windows(cam.camera)
         return
     if go_to_how_to_play:
-        how_to_play(cam.camera)
+        how_to_play(cam)
         is_in_menu = True
     rows = 4
     cols = 5
