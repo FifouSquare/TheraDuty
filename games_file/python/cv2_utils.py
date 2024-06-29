@@ -57,18 +57,28 @@ def draw_filled_rounded_rectangle(img, top_left, bottom_right, color, radius):
 
 def draw_rounded_shadow_rectangle(img, top_left, bottom_right, color, radius,
                                   shadow_offset,
-                                  shadow_color):
+                                  shadow_color, highlight_color):
     shadow_top_left = (
         top_left[0] + shadow_offset, top_left[1] + shadow_offset)
     shadow_bottom_right = (
         bottom_right[0] + shadow_offset, bottom_right[1] + shadow_offset)
 
+    highlight_top_left = (
+        top_left[0] - shadow_offset, top_left[1] - shadow_offset)
+    highlight_bottom_right = (
+        bottom_right[0] - shadow_offset, bottom_right[1] - shadow_offset)
+
     # Draw the shadow
     draw_filled_rounded_rectangle(img, shadow_top_left, shadow_bottom_right,
                                   shadow_color, radius)
 
+    draw_filled_rounded_rectangle(img, highlight_top_left,
+                                  highlight_bottom_right,
+                                  highlight_color, radius)
+
     # Draw the main filled rounded rectangle on top of the shadow
     draw_filled_rounded_rectangle(img, top_left, bottom_right, color, radius)
+
 
 def draw_line(lm, i, w, h):
     start = (int(lm.landmark[i].x * w),
@@ -98,7 +108,7 @@ class Camera:
 
 
 class Rectangle:
-    def __init__(self, x, y, width, height, color=(255, 255, 255),
+    def __init__(self, x, y, width, height, color=(200, 200, 200),
                  thickness=-1,
                  text="",
                  corner_radius=24):
@@ -109,6 +119,9 @@ class Rectangle:
         self.color = color
         self.thickness = thickness
         self.text = text
+        self.text_color = (0, 0, 0)
+        self.highlight_color = (255, 255, 255)
+        self.shadow_color = (96, 96, 96)
         self.corner_radius = corner_radius
         self.is_clicked = False
 
@@ -118,7 +131,8 @@ class Rectangle:
                                           (self.x + self.width,
                                            self.y + self.height),
                                           self.color, self.corner_radius, 5,
-                                          (96, 96, 96))
+                                          self.shadow_color,
+                                          self.highlight_color)
         else:
             draw_rounded_rectangle(img, (self.x, self.y),
                                    (self.x + self.width, self.y + self.height),
@@ -129,7 +143,7 @@ class Rectangle:
                         (
                             self.x + self.width // 2 - len(self.text) * 10,
                             self.y + self.height // 2),
-                        cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 3)
+                        cv2.FONT_HERSHEY_COMPLEX, 1, self.text_color, 3)
 
 
 class Hands:
@@ -141,7 +155,7 @@ class Hands:
         self.pinch_length = 50
         self.pinch_length_open = 100
 
-    def draw(self, thickness=50, color=(0, 255, 0)):
+    def draw(self, thickness=20, color=(0, 255, 0)):
         lm = self.landmarks[0]
         h, w, c = self.img.shape
         for i in range(21):
@@ -197,6 +211,62 @@ class Hands:
                        int(lm.landmark[0].y * h))
                 cv2.line(self.img, start, end, color, thickness)
 
+    def draw_on_img(self, img, thickness=20, color=(0, 255, 0)):
+        lm = self.landmarks[0]
+        h, w, c = self.img.shape
+        for i in range(21):
+            if i < 4:
+                start, end = draw_line(lm, i, w, h)
+                cv2.line(img, start, end, color, thickness)
+            if i == 4:
+                start = (int(lm.landmark[1].x * w),
+                         int(lm.landmark[1].y * h))
+                end = (int(lm.landmark[5].x * w),
+                       int(lm.landmark[5].y * h))
+                cv2.line(img, start, end, color, thickness)
+            if 4 < i < 8:
+                start, end = draw_line(lm, i, w, h)
+                cv2.line(img, start, end, color, thickness)
+
+            if i == 8:
+                start = (int(lm.landmark[5].x * w),
+                         int(lm.landmark[5].y * h))
+                end = (int(lm.landmark[9].x * w),
+                       int(lm.landmark[9].y * h))
+                cv2.line(img, start, end, color, thickness)
+
+            if 8 < i < 12:
+                start, end = draw_line(lm, i, w, h)
+                cv2.line(img, start, end, color, thickness)
+
+            if i == 12:
+                start = (int(lm.landmark[9].x * w),
+                         int(lm.landmark[9].y * h))
+                end = (int(lm.landmark[13].x * w),
+                       int(lm.landmark[13].y * h))
+                cv2.line(img, start, end, color, thickness)
+
+            if 12 < i < 16:
+                start, end = draw_line(lm, i, w, h)
+                cv2.line(img, start, end, color, thickness)
+
+            if i == 16:
+                start = (int(lm.landmark[13].x * w),
+                         int(lm.landmark[13].y * h))
+                end = (int(lm.landmark[17].x * w),
+                       int(lm.landmark[17].y * h))
+                cv2.line(img, start, end, color, thickness)
+
+            if 16 < i < 20:
+                start, end = draw_line(lm, i, w, h)
+                cv2.line(img, start, end, color, thickness)
+            if i == 17:
+                start = (int(lm.landmark[17].x * w),
+                         int(lm.landmark[17].y * h))
+                end = (int(lm.landmark[0].x * w),
+                       int(lm.landmark[0].y * h))
+                cv2.line(img, start, end, color, thickness)
+
     def get_pinch_pos(self):
         tx, ty = 0, 0
         for hand_landmarks in self.landmarks:
@@ -210,16 +280,14 @@ class Hands:
                 if i == 8:
                     length = ((cx - tx) ** 2 + (cy - ty) ** 2) ** 0.5
                     if length < self.pinch_length and not self.is_pinching:
-                        print("Pinched")
-                        print(cx, cy)
                         self.is_pinching = True
                         self.pinch_pos = (cx, cy)
                         return cx, cy
                     elif length > self.pinch_length_open and self.is_pinching:
                         self.is_pinching = False
 
-    def is_pinched_inside(self, rect):
+    def is_pinched_inside(self, r):
         x, y = self.pinch_pos
-        if rect.x < x < rect.x + rect.width and rect.y < y < rect.y + rect.height:
+        if r.x < x < r.x + r.width and r.y < y < r.y + r.height:
             return True
         return False
