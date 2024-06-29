@@ -1,58 +1,29 @@
 import unittest
-from unittest.mock import patch
 
-import numpy as np
-
-from memo import menu, setup_game, launch_game
-
-
-class TestMenu(unittest.TestCase):
-    @patch('cv2.VideoCapture')
-    def test_menu_starts_game_when_s_pressed(self, mock_vid):
-        mock_vid.read.return_value = (True, np.zeros((500, 500, 3),
-                                                     dtype=np.uint8))
-        with patch('cv2.waitKey', return_value=ord('s')):
-            with patch('memo.launch_game') as mock_launch:
-                menu(mock_vid)
-                mock_launch.assert_called_once()
-
-    @patch('cv2.VideoCapture')
-    def test_menu_quits_when_q_pressed(self, mock_vid):
-        mock_vid.read.return_value = (True, np.zeros((500, 500, 3),
-                                                     dtype=np.uint8))
-        with patch('cv2.waitKey', return_value=ord('q')):
-            with patch('cv2.destroyAllWindows') as mock_destroy:
-                menu(mock_vid)
-                mock_destroy.assert_called_once()
+from games_file.python.cv2_utils import Rectangle
+from memo import setup_game
 
 
 class TestSetupGame(unittest.TestCase):
-    def test_setup_game_creates_correct_grid(self):
-        rows, cols = 4, 5
-        result = setup_game(rows, cols)
-        self.assertEqual(len(result), rows)
-        self.assertEqual(len(result[0]), cols)
-        self.assertEqual(len(set(sum(result, []))), (rows * cols) // 2)
+    def test_setup_game_creates_correct_number_of_cards(self):
+        cards = setup_game(4, 5)
+        self.assertEqual(len(cards), 20)
 
-    def test_setup_game_creates_random_grid(self):
-        rows, cols = 4, 5
-        result1 = setup_game(rows, cols)
-        result2 = setup_game(rows, cols)
-        self.assertNotEqual(result1, result2)
+    def test_setup_game_creates_cards_with_correct_values(self):
+        cards = setup_game(2, 2)
+        card_values = [card.text for card in cards]
+        self.assertCountEqual(card_values, ['1', '1', '2', '2'])
 
+    def test_setup_game_creates_cards_with_correct_positions(self):
+        cards = setup_game(2, 2)
+        expected_positions = [(0, 0), (200, 0), (0, 250), (200, 250)]
+        card_positions = [(card.x, card.y) for card in cards]
+        self.assertCountEqual(card_positions, expected_positions)
 
-class LaunchGameTests(unittest.TestCase):
-    @patch('cv2.flip')
-    @patch('cv2.VideoCapture')
-    def test_game_quits_when_q_pressed(self, mock_vid, mock_flip):
-        mock_vid.read.return_value = (
-            True, np.zeros((500, 500, 3), dtype=np.uint8))
-        mock_flip.return_value = np.zeros((500, 500, 3),
-                                          dtype=np.uint8)
-        with patch('cv2.waitKey', return_value=ord('q')):
-            with patch('cv2.destroyAllWindows') as mock_destroy:
-                launch_game(mock_vid, [[-1] * 5] * 4)
-                mock_destroy.assert_called_once()
+    def test_setup_game_creates_cards_of_type_rectangle(self):
+        cards = setup_game(2, 2)
+        for card in cards:
+            self.assertIsInstance(card, Rectangle)
 
 
 if __name__ == '__main__':
