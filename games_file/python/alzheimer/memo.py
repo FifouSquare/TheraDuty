@@ -179,8 +179,7 @@ def launch_game():
 
     if go_to_menu:
         destroy_all_windows(cam.camera)
-        win()
-        # menu()
+        menu()
     else:
         destroy_all_windows(cam.camera)
         win()
