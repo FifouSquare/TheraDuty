@@ -6,6 +6,8 @@
 #include <QProcess>
 #include <QMessageBox>
 #include <QFile>
+#include <QLabel>
+#include <QPixmap>
 
 QPushButton *storeButton;
 QPushButton *gamesButton;
@@ -14,6 +16,7 @@ QPushButton *game1;
 QPushButton *game2;
 QPushButton *buy1;
 QPushButton *buy2;
+QPushButton *tempoButton;
 QString buttonMenuStyle;
 QString selectedButtonMenuStyle;
 
@@ -28,7 +31,7 @@ public slots:
 };
 
 void LauncherWidget::launchApplication() {
-    QString program = "/Users/delamonicavictor/CLionProjects/untitled/games/memo";
+    QString program = "/Users/hugo/Desktop/Epitech/EIP/TheraDuty/launcher/games/memo";
     QStringList arguments;
 
     if (!QFile::exists(program)) {
@@ -51,6 +54,7 @@ void onStoreButtonClicked(QPushButton *buttonClicked) {
         game2->hide();
         buy1->show();
         buy2->show();
+        tempoButton->hide();
     } else if (buttonClicked == gamesButton) {
         storeButton->setStyleSheet(buttonMenuStyle);
         gamesButton->setStyleSheet(selectedButtonMenuStyle);
@@ -59,6 +63,7 @@ void onStoreButtonClicked(QPushButton *buttonClicked) {
         game2->show();
         buy1->hide();
         buy2->hide();
+        tempoButton->hide();
     } else if (buttonClicked == formsButton) {
         storeButton->setStyleSheet(buttonMenuStyle);
         gamesButton->setStyleSheet(buttonMenuStyle);
@@ -67,6 +72,7 @@ void onStoreButtonClicked(QPushButton *buttonClicked) {
         game2->hide();
         buy1->hide();
         buy2->hide();
+        tempoButton->show();
     }
 }
 
@@ -77,6 +83,12 @@ int main(int argc, char *argv[]) {
     storeButton = new QPushButton("Store");
     gamesButton = new QPushButton("Games");
     formsButton = new QPushButton("Forms");
+    QLabel *Logo = new QLabel("Thera Duty");
+    QPixmap logo = QPixmap("../Pics/logo.png");
+    Logo->setPixmap(logo);
+    Logo->setStyleSheet("background-color: transparent;");
+    Logo->setFixedSize(120, 120);
+    Logo->setPixmap(logo);
 
     buttonMenuStyle = "QPushButton { "
                            "border-top-left-radius: 20px; "
@@ -97,8 +109,10 @@ int main(int argc, char *argv[]) {
     LauncherWidget window;
     window.setWindowTitle("Thera Duty");
     window.setStyleSheet("background-color: #3C3C3C;");
+    window.setFixedSize(1000, 800);
 
     storeButton->setFixedHeight(100);
+    storeButton->setFixedWidth(300);
     storeButton->setStyleSheet(selectedButtonMenuStyle);
     storeButton->setCursor(Qt::PointingHandCursor);
     QObject::connect(storeButton, &QPushButton::clicked, []() {
@@ -106,6 +120,7 @@ int main(int argc, char *argv[]) {
     });
 
     gamesButton->setFixedHeight(100);
+    gamesButton->setFixedWidth(300);
     gamesButton->setStyleSheet(buttonMenuStyle);
     gamesButton->setCursor(Qt::PointingHandCursor);
     QObject::connect(gamesButton, &QPushButton::clicked, []() {
@@ -113,6 +128,7 @@ int main(int argc, char *argv[]) {
     });
 
     formsButton->setFixedHeight(100);
+    formsButton->setFixedWidth(300);
     formsButton->setStyleSheet(buttonMenuStyle);
     formsButton->setCursor(Qt::PointingHandCursor);
     QObject::connect(formsButton, &QPushButton::clicked, []() {
@@ -121,6 +137,7 @@ int main(int argc, char *argv[]) {
 
     auto mainRow = new QHBoxLayout;
     auto layout = new QVBoxLayout;
+    layout->addWidget(Logo);
     layout->addWidget(storeButton);
     layout->addWidget(gamesButton);
     layout->addWidget(formsButton);
@@ -128,15 +145,32 @@ int main(int argc, char *argv[]) {
     auto *storeColumn = new QVBoxLayout;
     storeColumn->setAlignment(Qt::AlignTop);
     auto demoGame = new QHBoxLayout;
-    game1 = new QPushButton("Memo");
-    QObject::connect(game1, &QPushButton::clicked, &window, &LauncherWidget::launchApplication);
+
+    //GAME 1 : MEMO
+    game1 = new QPushButton();
+    QPixmap pic("../Pics/memory.png");
+    game1->setIcon(pic);
+    game1->setIconSize(QSize(200, 200));
+    std::string game1Name = "Memory Game";
+    game1->setText(QString::fromStdString(game1Name));
+
+    //GAME 2 : BODY
     game2 = new QPushButton("Game 2");
+    QPixmap pic2("../Pics/Tempo.png");
+    game2->setIcon(pic2);
+    game2->setIconSize(QSize(200, 200));
+    std::string game2Name = "Body Game";
+    game2->setText(QString::fromStdString(game2Name));
+
+
     buy1 = new QPushButton("Buy Game 3");
     buy2 = new QPushButton("Buy Game 4");
+    tempoButton = new QPushButton();
     demoGame->addWidget(game1);
     demoGame->addWidget(game2);
     demoGame->addWidget(buy1);
     demoGame->addWidget(buy2);
+    demoGame->addWidget(tempoButton);
     game1->hide();
     game2->hide();
     storeColumn->addLayout(demoGame);
@@ -144,9 +178,10 @@ int main(int argc, char *argv[]) {
     mainRow->addLayout(storeColumn);
 
 
+
     window.setLayout(mainRow);
 
-    window.resize(800, 600);
+    window.resize(1000, 800);
     window.show();
 
     return QApplication::exec();
