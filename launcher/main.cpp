@@ -8,8 +8,10 @@
 #include <QFile>
 #include <QLabel>
 #include <QPixmap>
+#include <__filesystem/operations.h>
 
 QPushButton *storeButton;
+QPushButton *contactButton;
 QPushButton *gamesButton;
 QPushButton *formsButton;
 QPushButton *game1;
@@ -50,6 +52,7 @@ void onStoreButtonClicked(QPushButton *buttonClicked) {
         storeButton->setStyleSheet(selectedButtonMenuStyle);
         gamesButton->setStyleSheet(buttonMenuStyle);
         formsButton->setStyleSheet(buttonMenuStyle);
+        contactButton->setStyleSheet(buttonMenuStyle);
         game1->hide();
         game2->hide();
         buy1->show();
@@ -59,6 +62,7 @@ void onStoreButtonClicked(QPushButton *buttonClicked) {
         storeButton->setStyleSheet(buttonMenuStyle);
         gamesButton->setStyleSheet(selectedButtonMenuStyle);
         formsButton->setStyleSheet(buttonMenuStyle);
+        contactButton->setStyleSheet(buttonMenuStyle);
         game1->show();
         game2->show();
         buy1->hide();
@@ -68,6 +72,17 @@ void onStoreButtonClicked(QPushButton *buttonClicked) {
         storeButton->setStyleSheet(buttonMenuStyle);
         gamesButton->setStyleSheet(buttonMenuStyle);
         formsButton->setStyleSheet(selectedButtonMenuStyle);
+        contactButton->setStyleSheet(buttonMenuStyle);
+        game1->hide();
+        game2->hide();
+        buy1->hide();
+        buy2->hide();
+        tempoButton->show();
+    } else if (buttonClicked == contactButton) {
+        storeButton->setStyleSheet(buttonMenuStyle);
+        gamesButton->setStyleSheet(buttonMenuStyle);
+        formsButton->setStyleSheet(buttonMenuStyle);
+        contactButton->setStyleSheet(selectedButtonMenuStyle);
         game1->hide();
         game2->hide();
         buy1->hide();
@@ -83,12 +98,15 @@ int main(int argc, char *argv[]) {
     storeButton = new QPushButton("Store");
     gamesButton = new QPushButton("Games");
     formsButton = new QPushButton("Forms");
+    contactButton = new QPushButton("Contact");
+
     QLabel *Logo = new QLabel("Thera Duty");
     QPixmap logo = QPixmap("../Pics/logo.png");
     Logo->setPixmap(logo);
-    Logo->setStyleSheet("background-color: transparent;");
     Logo->setFixedSize(120, 120);
     Logo->setPixmap(logo);
+
+
 
     buttonMenuStyle = "QPushButton { "
                            "border-top-left-radius: 20px; "
@@ -115,6 +133,8 @@ int main(int argc, char *argv[]) {
     storeButton->setFixedWidth(300);
     storeButton->setStyleSheet(selectedButtonMenuStyle);
     storeButton->setCursor(Qt::PointingHandCursor);
+    QIcon storeIcon("../Pics/store.png");
+    storeButton->setIcon(storeIcon);
     QObject::connect(storeButton, &QPushButton::clicked, []() {
         onStoreButtonClicked(storeButton);
     });
@@ -123,6 +143,8 @@ int main(int argc, char *argv[]) {
     gamesButton->setFixedWidth(300);
     gamesButton->setStyleSheet(buttonMenuStyle);
     gamesButton->setCursor(Qt::PointingHandCursor);
+    QIcon gameIcon("../Pics/game.png");
+    gamesButton->setIcon(gameIcon);
     QObject::connect(gamesButton, &QPushButton::clicked, []() {
         onStoreButtonClicked(gamesButton);
     });
@@ -131,36 +153,54 @@ int main(int argc, char *argv[]) {
     formsButton->setFixedWidth(300);
     formsButton->setStyleSheet(buttonMenuStyle);
     formsButton->setCursor(Qt::PointingHandCursor);
+    QIcon formsIcon("../Pics/livre.png");
+    formsButton->setIcon(formsIcon);
     QObject::connect(formsButton, &QPushButton::clicked, []() {
         onStoreButtonClicked(formsButton);
     });
 
+    contactButton->setFixedHeight(100);
+    contactButton->setFixedWidth(300);
+    contactButton->setStyleSheet(buttonMenuStyle);
+    contactButton->setCursor(Qt::PointingHandCursor);
+    QIcon contactIcon("../Pics/contact.png");
+    contactButton->setIcon(contactIcon);
+    QObject::connect(contactButton, &QPushButton::clicked, []() {
+        onStoreButtonClicked(contactButton);
+    });
+
     auto mainRow = new QHBoxLayout;
     auto layout = new QVBoxLayout;
-    layout->addWidget(Logo);
+    auto rowLogo = new QHBoxLayout;
+    auto rowcontact = new QHBoxLayout;
+
+    rowLogo->setAlignment(Qt::AlignCenter);
+    rowLogo->addWidget(Logo);
+
+    rowcontact->addWidget(contactButton);
+    rowcontact->setAlignment(Qt::AlignBottom);
+
+    layout->addLayout(rowLogo);
     layout->addWidget(storeButton);
     layout->addWidget(gamesButton);
     layout->addWidget(formsButton);
+    layout->addLayout(rowcontact);
 
     auto *storeColumn = new QVBoxLayout;
     storeColumn->setAlignment(Qt::AlignTop);
     auto demoGame = new QHBoxLayout;
 
     //GAME 1 : MEMO
-    game1 = new QPushButton();
-    QPixmap pic("../Pics/memory.png");
+    game1 = new QPushButton("Memory Game");
+    QIcon pic("../Pics/memory.png");
     game1->setIcon(pic);
     game1->setIconSize(QSize(200, 200));
-    std::string game1Name = "Memory Game";
-    game1->setText(QString::fromStdString(game1Name));
 
     //GAME 2 : BODY
     game2 = new QPushButton("Game 2");
     QPixmap pic2("../Pics/Tempo.png");
     game2->setIcon(pic2);
     game2->setIconSize(QSize(200, 200));
-    std::string game2Name = "Body Game";
-    game2->setText(QString::fromStdString(game2Name));
 
 
     buy1 = new QPushButton("Buy Game 3");
