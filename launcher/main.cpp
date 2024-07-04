@@ -8,7 +8,9 @@
 #include <QFile>
 #include <QLabel>
 #include <QPixmap>
+#include <QPainter>
 #include <__filesystem/operations.h>
+#include <QToolButton>
 
 QPushButton *storeButton;
 QPushButton *contactButton;
@@ -22,6 +24,37 @@ QPushButton *tempoButton;
 QString buttonMenuStyle;
 QString selectedButtonMenuStyle;
 
+class VerticalIconButton : public QPushButton
+{
+public:
+    VerticalIconButton(const QString &text, const QIcon &icon, QWidget *parent = nullptr)
+            : QPushButton(parent)
+    {
+        setText(text);
+        setIcon(icon);
+        setIconSize(QSize(200, 200));
+    }
+
+protected:
+    void paintEvent(QPaintEvent *event) override
+    {
+        QPainter painter(this);
+        QSize iconSize = this->iconSize();
+        QPixmap pixmap = icon().pixmap(iconSize);
+
+        int iconX = (width() - iconSize.width()) / 2;
+        int iconY = 0;
+        int textX = 0;
+        int textY = iconSize.height() + 10; // Adding a small space between icon and text
+
+        painter.drawPixmap(iconX, iconY, pixmap);
+        painter.drawText(QRect(textX, textY, width(), height() - iconSize.height()), Qt::AlignCenter, text());
+
+        // Call base class implementation to handle other aspects
+        QPushButton::paintEvent(event);
+    }
+};
+
 class LauncherWidget : public QWidget {
 Q_OBJECT
 
@@ -29,19 +62,30 @@ public:
     ~LauncherWidget() override = default;
 
 public slots:
-    void launchApplication();
+
+    void launchApplication(const QString &game, const std::string support);
 };
 
-void LauncherWidget::launchApplication() {
-    QString program = "/Users/hugo/Desktop/Epitech/EIP/TheraDuty/launcher/games/memo";
+void LauncherWidget::launchApplication(const QString &game, const std::string support) {
     QStringList arguments;
 
-    if (!QFile::exists(program)) {
-        QMessageBox::critical(this, "Error", "Application not found at: " + program);
+    if (!QFile::exists(game)) {
+        QMessageBox::critical(this, "Error", "Application not found at: " + game);
         return;
     }
-
-    bool started = QProcess::startDetached(program, arguments);
+    bool started;
+    QStringList command;
+    if (support == "mac") {
+        command << "-a";
+        command << game.split("/").last().split(".").first();
+        command << game;
+        started = QProcess::startDetached("open", command);
+    } else if (support == "python"){
+        started = QProcess::startDetached(game, arguments);
+    } else {
+        command << game;
+        started = QProcess::startDetached("/bin/sh", command);
+    }
     if (!started) {
         QMessageBox::critical(this, "Error", "Failed to launch application");
     }
@@ -107,22 +151,21 @@ int main(int argc, char *argv[]) {
     Logo->setPixmap(logo);
 
 
-
     buttonMenuStyle = "QPushButton { "
-                           "border-top-left-radius: 20px; "
-                           "border-bottom-left-radius: 24px; "
-                           "padding: 5px; "
-                           "opacity: 50%; "
-                           "background-color: #3C3C3C; "
-                           //a "background-color: #6A6A6A; "
-                           "}";
+                      "border-top-left-radius: 20px; "
+                      "border-bottom-left-radius: 24px; "
+                      "padding: 5px; "
+                      "opacity: 50%; "
+                      "background-color: #3C3C3C; "
+                      //a "background-color: #6A6A6A; "
+                      "}";
     selectedButtonMenuStyle = "QPushButton { "
-                                   "border-top-left-radius: 20px; "
-                                   "border-bottom-left-radius: 24px; "
-                                   "padding: 5px; "
-                                   "opacity: 50%; "
-                                   "background-color: #6A6A6A; "
-                                   "}";
+                              "border-top-left-radius: 20px; "
+                              "border-bottom-left-radius: 24px; "
+                              "padding: 5px; "
+                              "opacity: 50%; "
+                              "background-color: #6A6A6A; "
+                              "}";
 
     LauncherWidget window;
     window.setWindowTitle("Thera Duty");
@@ -190,15 +233,25 @@ int main(int argc, char *argv[]) {
     storeColumn->setAlignment(Qt::AlignTop);
     auto demoGame = new QHBoxLayout;
 
-    //GAME 1 : MEMO
-    game1 = new QPushButton("Memory Game");
-    QIcon pic("../Pics/memory.png");
-    game1->setIcon(pic);
-    game1->setIconSize(QSize(200, 200));
+
+    QString tools = "../test.sh";
+    // GAME 1 : MEMO
+    game1 = new VerticalIconButton("Memory Game", QIcon("../assets/icons/games/memory.png"));
+    QString path1 = "../games/memo";
+
+    QObject::connect(game1, &QPushButton::clicked, &window, [&window, path1, tools]() {
+        window.launchApplication(tools, "");
+        window.launchApplication(path1, "python");
+    });
 
     //GAME 2 : BODY
-    game2 = new QPushButton("Game 2");
-    QPixmap pic2("../Pics/Tempo.png");
+    game2 = new QPushButton("Memory Godot");
+    QString path2 = "../games/Memory.dmg";
+    QObject::connect(game2, &QPushButton::clicked, &window, [&window, path2, tools]() {
+        window.launchApplication(tools, "");
+        window.launchApplication(path2, "mac");
+    });
+    QPixmap pic2("../assets/icons/games/memory.png");
     game2->setIcon(pic2);
     game2->setIconSize(QSize(200, 200));
 
@@ -216,7 +269,6 @@ int main(int argc, char *argv[]) {
     storeColumn->addLayout(demoGame);
     mainRow->addLayout(layout);
     mainRow->addLayout(storeColumn);
-
 
 
     window.setLayout(mainRow);
