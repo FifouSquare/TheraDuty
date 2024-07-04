@@ -1,7 +1,8 @@
 import unittest
 
-from games_file.python.cv2_utils import Rectangle
 from memo import setup_game
+
+from games_file.python.alzheimer.cv2_utils import Rectangle
 
 
 class TestSetupGame(unittest.TestCase):
