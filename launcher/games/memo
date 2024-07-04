@@ -298,7 +298,6 @@ class Hands:
         return False
 
 
-
 def setup_game(rows=4, cols=5):
     card_values = [i for i in range(1, (rows * cols) // 2 + 1)] * 2
     random.shuffle(card_values)
